@@ -12,6 +12,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUBNAME }}
           password: ${{ secrets.DOCKERHUBPWD }}
-          repository: excalidraw/excalidraw-room
+          repository: ponchoe/excalidraw-room
           tag_with_ref: true
           tag_with_sha: true
