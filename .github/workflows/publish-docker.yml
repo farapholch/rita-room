@@ -10,8 +10,8 @@ jobs:
       - uses: actions/checkout@v2
       - uses: docker/build-push-action@v1
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUBNAME }}
+          password: ${{ secrets.DOCKERHUBPWD }}
           repository: excalidraw/excalidraw-room
           tag_with_ref: true
           tag_with_sha: true
