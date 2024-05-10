@@ -49,6 +49,16 @@ try {
     allowEIO3: true,
   });
 
+  const { PrometheusSocketIo } = require('socket.io-prometheus-v3')
+  const prometheus = PrometheusSocketIo.init({ 
+      io, // io.Server
+      collectDefaultMetrics: true // Collect some Node.js-specific metrics.
+  })
+
+  app.get('/metrics', async (req, res) => {
+      res.send(await prometheus.getMetrics())
+  })
+
   io.on("connection", (socket) => {
     ioDebug("connection established!");
     io.to(`${socket.id}`).emit("init-room");
