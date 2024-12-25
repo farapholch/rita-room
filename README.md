@@ -1,4 +1,4 @@
-# Example of excalidraw collaboration server
+# Excalidraw collaboration server with metrics from socket.io
 
 This is collaboration server for Excalidraw with metrics support from socket io and prom client with updated packages.
 
