@@ -2,6 +2,7 @@ import debug from "debug";
 import express from "express";
 import http from "http";
 import { Server as SocketIO } from "socket.io";
+import { Gauge, Counter } from "prom-client";
 
 type UserToFollow = {
   socketId: string;
@@ -38,6 +39,42 @@ server.listen(port, () => {
   serverDebug(`listening on port: ${port}`);
 });
 
+// Create Prometheus metrics
+const { register } = require('prom-client');
+
+// Socket connected users gauge
+const connectedSocketsGauge = new Gauge({
+  name: 'socket_io_connected',
+  help: 'Number of currently connected sockets',
+});
+
+// Socket connections by room gauge
+const roomUserCountGauge = new Gauge({
+  name: 'socket_io_room_user_count',
+  help: 'Number of users in each room',
+  labelNames: ['room'], // Room name as a label
+});
+
+// Event emit count counters
+const messageEmitCounter = new Counter({
+  name: 'socket_io_message_emit_count',
+  help: 'Total number of message emits from the server',
+  labelNames: ['event'], // Event name as a label
+});
+
+const followEmitCounter = new Counter({
+  name: 'socket_io_follow_emit_count',
+  help: 'Total number of follow event emits from the server',
+  labelNames: ['action'], // Follow action as a label
+});
+
+// Socket disconnections counter
+const disconnectCounter = new Counter({
+  name: 'socket_io_disconnect_count',
+  help: 'Total number of socket disconnections',
+});
+
+// Initialize socket.io
 try {
   const io = new SocketIO(server, {
     transports: ["websocket", "polling"],
@@ -49,28 +86,22 @@ try {
     allowEIO3: true,
   });
 
-  const app = require("express")();
-  const server = require("http").Server(app);
-  const io = require("socket.io")(server);
-  const ioMetrics = require("socket.io-prometheus");
-  const promRegister = require("prom-client").register;
-
-  // start collecting socket.io metrics
-  ioMetrics(io);
-
-  // expose metrics endpoint
-  app.get("/metrics", (req, res) => {
-    res.set("Content-Type", promRegister.contentType);
-    res.end(promRegister.metrics());
-  });
-
   io.on("connection", (socket) => {
     ioDebug("connection established!");
+
+    // Increment the connected socket count
+    connectedSocketsGauge.inc();
+
     io.to(`${socket.id}`).emit("init-room");
+
     socket.on("join-room", async (roomID) => {
       socketDebug(`${socket.id} has joined ${roomID}`);
       await socket.join(roomID);
       const sockets = await io.in(roomID).fetchSockets();
+      
+      // Track room user count
+      roomUserCountGauge.set({ room: roomID }, sockets.length);
+
       if (sockets.length <= 1) {
         io.to(`${socket.id}`).emit("first-in-room");
       } else {
@@ -84,31 +115,30 @@ try {
       );
     });
 
-    socket.on(
-      "server-broadcast",
-      (roomID: string, encryptedData: ArrayBuffer, iv: Uint8Array) => {
-        socketDebug(`${socket.id} sends update to ${roomID}`);
-        socket.broadcast.to(roomID).emit("client-broadcast", encryptedData, iv);
-      },
-    );
+    // Track message emits
+    socket.on("server-broadcast", (roomID, encryptedData, iv) => {
+      messageEmitCounter.inc({ event: 'server-broadcast' });
+      socketDebug(`${socket.id} sends update to ${roomID}`);
+      socket.broadcast.to(roomID).emit("client-broadcast", encryptedData, iv);
+    });
 
-    socket.on(
-      "server-volatile-broadcast",
-      (roomID: string, encryptedData: ArrayBuffer, iv: Uint8Array) => {
-        socketDebug(`${socket.id} sends volatile update to ${roomID}`);
-        socket.volatile.broadcast
-          .to(roomID)
-          .emit("client-broadcast", encryptedData, iv);
-      },
-    );
+    socket.on("server-volatile-broadcast", (roomID, encryptedData, iv) => {
+      messageEmitCounter.inc({ event: 'server-volatile-broadcast' });
+      socketDebug(`${socket.id} sends volatile update to ${roomID}`);
+      socket.volatile.broadcast
+        .to(roomID)
+        .emit("client-broadcast", encryptedData, iv);
+    });
 
     socket.on("user-follow", async (payload: OnUserFollowedPayload) => {
       const roomID = `follow@${payload.userToFollow.socketId}`;
 
+      // Track follow actions
+      followEmitCounter.inc({ action: payload.action });
+
       switch (payload.action) {
         case "FOLLOW": {
           await socket.join(roomID);
-
           const sockets = await io.in(roomID).fetchSockets();
           const followedBy = sockets.map((socket) => socket.id);
 
@@ -116,12 +146,10 @@ try {
             "user-follow-room-change",
             followedBy,
           );
-
           break;
         }
         case "UNFOLLOW": {
           await socket.leave(roomID);
-
           const sockets = await io.in(roomID).fetchSockets();
           const followedBy = sockets.map((socket) => socket.id);
 
@@ -129,7 +157,6 @@ try {
             "user-follow-room-change",
             followedBy,
           );
-
           break;
         }
       }
@@ -137,10 +164,17 @@ try {
 
     socket.on("disconnecting", async () => {
       socketDebug(`${socket.id} has disconnected`);
+
+      // Decrement connected socket count
+      connectedSocketsGauge.dec();
+
       for (const roomID of Array.from(socket.rooms)) {
         const otherClients = (await io.in(roomID).fetchSockets()).filter(
           (_socket) => _socket.id !== socket.id,
         );
+
+        // Update room user count
+        roomUserCountGauge.set({ room: roomID }, otherClients.length);
 
         const isFollowRoom = roomID.startsWith("follow@");
 
@@ -156,6 +190,9 @@ try {
           io.to(socketId).emit("broadcast-unfollow");
         }
       }
+
+      // Increment disconnection counter
+      disconnectCounter.inc();
     });
 
     socket.on("disconnect", () => {
@@ -166,3 +203,18 @@ try {
 } catch (error) {
   console.error(error);
 }
+
+// Expose Prometheus metrics
+server.on('request', async (req, res) => {
+  if (req.url === '/metrics') {
+    try {
+      const metrics = await register.metrics(); // Resolve the promise
+      res.setHeader('Content-Type', register.contentType);
+      res.end(metrics); // Send the resolved metrics string
+    } catch (err) {
+      res.statusCode = 500;
+      res.end('Error collecting metrics');
+      console.error('Error while fetching metrics:', err);
+    }
+  }
+});
