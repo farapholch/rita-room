@@ -1,6 +1,6 @@
 # Example of excalidraw collaboration server
 
-Collaboration server for Excalidraw
+This is collaboration server for Excalidraw with metrics support from socket io and prom client with updated packages.
 
 If you need to use cluster mode with pm2. Checkout: https://socket.io/docs/v4/pm2/
 
