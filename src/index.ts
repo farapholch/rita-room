@@ -55,6 +55,28 @@ const roomUserCountGauge = new Gauge({
   labelNames: ['room'], // Room name as a label
 });
 
+// Gauge to track the number of active rooms
+const activeRoomsGauge = new Gauge({
+  name: 'socket_io_active_rooms',
+  help: 'Number of currently active rooms with at least one user',
+});
+
+// Function to update the active rooms count
+const updateActiveRoomsCount = () => {
+  const rooms = io.sockets.adapter.rooms; // Get all rooms
+  let activeRoomsCount = 0;
+
+  for (const [roomID, sockets] of rooms) {
+    // Count only rooms that are NOT socket IDs (default behavior of Socket.IO)
+    if (!io.sockets.sockets.has(roomID) && sockets.size > 0) {
+      activeRoomsCount++;
+    }
+  }
+
+  // Update the active rooms gauge
+  activeRoomsGauge.set(activeRoomsCount);
+};
+
 // Event emit count counters
 const messageEmitCounter = new Counter({
   name: 'socket_io_message_emit_count',
