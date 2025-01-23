@@ -61,22 +61,6 @@ const activeRoomsGauge = new Gauge({
   help: 'Number of currently active rooms with at least one user',
 });
 
-// Function to update the active rooms count
-const updateActiveRoomsCount = () => {
-  const rooms = io.sockets.adapter.rooms; // Get all rooms
-  let activeRoomsCount = 0;
-
-  for (const [roomID, sockets] of rooms) {
-    // Count only rooms that are NOT socket IDs (default behavior of Socket.IO)
-    if (!io.sockets.sockets.has(roomID) && sockets.size > 0) {
-      activeRoomsCount++;
-    }
-  }
-
-  // Update the active rooms gauge
-  activeRoomsGauge.set(activeRoomsCount);
-};
-
 // Event emit count counters
 const messageEmitCounter = new Counter({
   name: 'socket_io_message_emit_count',
@@ -108,6 +92,22 @@ try {
     allowEIO3: true,
   });
 
+  // Function to update the active rooms count
+  const updateActiveRoomsCount = () => {
+    const rooms = io.sockets.adapter.rooms; // Get all rooms
+    let activeRoomsCount = 0;
+  
+    Array.from(rooms.entries()).forEach(([roomID, sockets]) => {
+      // Count only rooms with more than 0 users
+      if (sockets.size > 0) {
+        activeRoomsCount++;
+      }
+    });
+  
+    // Update the active rooms gauge
+    activeRoomsGauge.set(activeRoomsCount);
+  };
+  
   io.on("connection", (socket) => {
     ioDebug("connection established!");
 
@@ -122,7 +122,10 @@ try {
       const sockets = await io.in(roomID).fetchSockets();
       
       // Track room user count
-      roomUserCountGauge.set({ room: roomID }, sockets.length);
+      roomUserCountGauge.set({ room: roomID }, sockets.length);     
+
+      // Update the active rooms count
+      updateActiveRoomsCount();
 
       if (sockets.length <= 1) {
         io.to(`${socket.id}`).emit("first-in-room");
@@ -197,6 +200,13 @@ try {
 
         // Update room user count
         roomUserCountGauge.set({ room: roomID }, otherClients.length);
+
+        // Clear the room gauge if the room is empty
+        if (otherClients.length === 0) {
+          roomUserCountGauge.remove({ room: roomID });
+}
+        // Update active rooms count after a user disconnects
+        updateActiveRoomsCount();
 
         const isFollowRoom = roomID.startsWith("follow@");
 
