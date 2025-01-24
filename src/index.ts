@@ -94,16 +94,17 @@ try {
 
   // Function to update the active rooms count
   const updateActiveRoomsCount = () => {
-    const rooms = io.sockets.adapter.rooms; // Get all rooms
+    const rooms = io.sockets.adapter.rooms;
     let activeRoomsCount = 0;
-  
+
     Array.from(rooms.entries()).forEach(([roomID, sockets]) => {
-      // Count only rooms with more than 0 users
-      if (sockets.size > 0) {
+      // Exclude private rooms (rooms where the room ID matches a socket ID)
+      const isPrivateRoom = io.sockets.sockets.has(roomID);
+      if (!isPrivateRoom && sockets.size > 0) {
         activeRoomsCount++;
       }
     });
-  
+
     // Update the active rooms gauge
     activeRoomsGauge.set(activeRoomsCount);
   };
