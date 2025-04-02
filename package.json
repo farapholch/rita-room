@@ -21,6 +21,9 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "5.8.2"
   },
+  "resolutions": {
+    "braces": "^3.0.3"
+  },
   "license": "MIT",
   "main": "dist/index.js",
   "name": "excalidraw-portal",
