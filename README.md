@@ -1,6 +1,6 @@
 # Excalidraw collaboration server with metrics from socket.io
 
-This is collaboration server for Excalidraw with metrics support from socket io and prom client with updated packages.
+This is collaboration server for Excalidraw with metrics support from socket io and prom client with updated packages. Also built for support for Redis with Sentinel failover.
 
 If you need to use cluster mode with pm2. Checkout: https://socket.io/docs/v4/pm2/
 
