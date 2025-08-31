@@ -166,14 +166,11 @@ async function main() {
   // Socket.IO logic
   io.on("connection", (socket) => {
     ioDebug("connection established!");
-    updateConnectedSocketsCount();
-
-    let currentRoomId: string | null = null;
+    updateConnectedSocketsCount();    
 
     io.to(socket.id).emit("init-room");
 
-    socket.on("join-room", async (roomID) => {
-      currentRoomId = roomID;
+    socket.on("join-room", async (roomID) => {      
       socketDebug(`${socket.id} has joined ${roomID}`);
       await socket.join(roomID);
 
