@@ -21,7 +21,7 @@ type OnUserFollowedPayload = {
 dotenv.config(
   process.env.NODE_ENV !== "development"
     ? { path: ".env.production" }
-    : { path: ".env.development" }
+    : { path: ".env.development" },
 );
 
 // Debuggers
@@ -94,7 +94,7 @@ async function main() {
     retryStrategy: (retries) => {
       const delay = Math.min(retries * 100, 3000);
       console.warn(
-        `🔁 Redis reconnect attempt #${retries}, retrying in ${delay}ms...`
+        `🔁 Redis reconnect attempt #${retries}, retrying in ${delay}ms...`,
       );
       return delay;
     },
@@ -104,7 +104,7 @@ async function main() {
   baseRedis.on("reconnecting", (attempt: number) => {
     console.log(`🔁 Redis reconnecting... attempt #${attempt}`);
   });
-  
+
   let hasConnectedInitially = false;
 
   baseRedis.on("ready", () => {
@@ -120,10 +120,10 @@ async function main() {
   const subClient = baseRedis.duplicate();
 
   pubClient.on("error", (err) =>
-    console.error("❌ Redis Pub Client Error:", err)
+    console.error("❌ Redis Pub Client Error:", err),
   );
   subClient.on("error", (err) =>
-    console.error("❌ Redis Sub Client Error:", err)
+    console.error("❌ Redis Sub Client Error:", err),
   );
 
   console.log("🔌 Connecting to Redis Sentinel...");
@@ -153,13 +153,13 @@ async function main() {
     const rooms = io.sockets.adapter.rooms;
     const socketIds = new Set(io.sockets.sockets.keys());
     let activeRoomsCount = 0;
-  
+
     for (const [roomID, sockets] of rooms.entries()) {
       if (!socketIds.has(roomID) && sockets.size > 0) {
         activeRoomsCount++;
       }
     }
-  
+
     activeRoomsGauge.set(activeRoomsCount);
   };
 
@@ -168,12 +168,9 @@ async function main() {
     ioDebug("connection established!");
     updateConnectedSocketsCount();
 
-    let currentRoomId: string | null = null;
-
     io.to(socket.id).emit("init-room");
 
     socket.on("join-room", async (roomID) => {
-      currentRoomId = roomID;
       socketDebug(`${socket.id} has joined ${roomID}`);
       await socket.join(roomID);
 
@@ -192,7 +189,7 @@ async function main() {
 
       io.in(roomID).emit(
         "room-user-change",
-        sockets.map((s) => s.id)
+        sockets.map((s) => s.id),
       );
     });
 
@@ -215,11 +212,9 @@ async function main() {
     socket.on("server-volatile-broadcast", (roomID, encryptedData, iv) => {
       messageEmitCounter.inc({ event: "server-volatile-broadcast" });
       socketDebug(`${socket.id} sends volatile update to ${roomID}`);
-      socket.volatile.broadcast.to(roomID).emit(
-        "client-broadcast",
-        encryptedData,
-        iv
-      );
+      socket.volatile.broadcast
+        .to(roomID)
+        .emit("client-broadcast", encryptedData, iv);
     });
 
     socket.on("user-follow", async (payload: OnUserFollowedPayload) => {
@@ -239,12 +234,11 @@ async function main() {
       const followedBy = sockets.map((s) => s.id);
       io.to(payload.userToFollow.socketId).emit(
         "user-follow-room-change",
-        followedBy
+        followedBy,
       );
     });
 
-    socket.on("disconnecting", async () => {      
-
+    socket.on("disconnecting", async () => {
       const redisKey = `user-room:${socket.id}`;
       await baseRedis.del(redisKey);
 
@@ -252,7 +246,7 @@ async function main() {
 
       for (const roomId of rooms) {
         const otherClients = (await io.in(roomId).fetchSockets()).filter(
-          (_socket) => _socket.id !== socket.id
+          (_socket) => _socket.id !== socket.id,
         );
 
         roomUserCountGauge.set({ room: roomId }, otherClients.length);
@@ -268,9 +262,10 @@ async function main() {
         const isFollowRoom = roomId.startsWith("follow@");
 
         if (!isFollowRoom && otherClients.length > 0) {
-          socket.broadcast
-            .to(roomId)
-            .emit("room-user-change", otherClients.map((s) => s.id));
+          socket.broadcast.to(roomId).emit(
+            "room-user-change",
+            otherClients.map((s) => s.id),
+          );
         }
 
         if (isFollowRoom && otherClients.length === 0) {
