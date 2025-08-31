@@ -1,10 +1,9 @@
 const { FlatCompat } = require("@eslint/eslintrc");
 const typescriptPlugin = require("@typescript-eslint/eslint-plugin");
-const path = require("path");
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
-  recommendedConfig: true, // <-- viktigt
+  recommendedConfig: { eslint: true }, // <- ändrat från true
 });
 
 module.exports = [
