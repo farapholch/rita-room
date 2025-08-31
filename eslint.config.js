@@ -1,9 +1,9 @@
-import { FlatCompat } from "@eslint/eslintrc";
-import typescriptPlugin from "@typescript-eslint/eslint-plugin";
+const { FlatCompat } = require("@eslint/eslintrc");
+const typescriptPlugin = require("@typescript-eslint/eslint-plugin");
 
 const compat = new FlatCompat({ baseDirectory: __dirname });
 
-export default [
+module.exports = [
   ...compat.extends("eslint:recommended"),
   {
     plugins: {
@@ -11,7 +11,6 @@ export default [
     },
     rules: {
       "@typescript-eslint/no-unused-vars": "error",
-      // Lägg till fler regler här
     },
   },
 ];
