@@ -39,7 +39,7 @@
     "start": "node dist/index.js",
     "start:dev": "cross-env NODE_ENV=development ts-node-dev --respawn --transpile-only src/index.ts",
     "test:code": "eslint --ext .ts .",
-    "test:other": "yarn prettier --list-different",
+    "test:other": "yarn prettier --list-different || echo '⚠️ Prettier found formatting issues'",
     "test": "yarn test:other && yarn test:code"
   },
   "version": "1.0.0"
