@@ -2,6 +2,8 @@ FROM registry.access.redhat.com/ubi9/nodejs-22-minimal:1 AS builder
 
 WORKDIR /excalidraw-room
 
+RUN npm install -g yarn
+
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
@@ -13,6 +15,8 @@ RUN yarn build
 FROM registry.access.redhat.com/ubi9/nodejs-22-minimal:1
 
 WORKDIR /excalidraw-room
+
+RUN npm install -g yarn
 
 COPY package.json yarn.lock ./
 RUN yarn install --production --frozen-lockfile
