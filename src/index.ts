@@ -22,7 +22,7 @@ type OnUserFollowedPayload = {
 dotenv.config(
   process.env.NODE_ENV !== "development"
     ? { path: ".env.production" }
-    : { path: ".env.development" }
+    : { path: ".env.development" },
 );
 
 // === Debuggers ===
@@ -31,7 +31,8 @@ const ioDebug = debug("io");
 
 // === Express setup ===
 const app = express();
-const port = process.env.PORT || (process.env.NODE_ENV !== "development" ? 80 : 3002);
+const port =
+  process.env.PORT || (process.env.NODE_ENV !== "development" ? 80 : 3002);
 app.use(express.static("public"));
 app.get("/", (_, res) => {
   res.send("🐉 Dragonfly-backed Rita Room server is running!");
@@ -81,14 +82,18 @@ async function safeSet(client: Redis, key: string, value: string, retries = 3) {
     } catch (err: any) {
       const msg = String(err?.message || err);
       if (msg.includes("READONLY")) {
-        console.warn(`[safeSet] READONLY key="${key}" — retrying in 200ms (attempt ${i + 1})`);
+        console.warn(
+          `[safeSet] READONLY key="${key}" — retrying in 200ms (attempt ${i + 1})`,
+        );
         await new Promise((r) => setTimeout(r, 200));
       } else {
         throw err;
       }
     }
   }
-  console.error(`[safeSet] Failed to write key "${key}" after ${retries} retries`);
+  console.error(
+    `[safeSet] Failed to write key "${key}" after ${retries} retries`,
+  );
 }
 
 async function safeDel(client: Redis, key: string, retries = 3) {
@@ -99,14 +104,18 @@ async function safeDel(client: Redis, key: string, retries = 3) {
     } catch (err: any) {
       const msg = String(err?.message || err);
       if (msg.includes("READONLY")) {
-        console.warn(`[safeDel] READONLY key="${key}" — retrying in 200ms (attempt ${i + 1})`);
+        console.warn(
+          `[safeDel] READONLY key="${key}" — retrying in 200ms (attempt ${i + 1})`,
+        );
         await new Promise((r) => setTimeout(r, 200));
       } else {
         throw err;
       }
     }
   }
-  console.error(`[safeDel] Failed to delete key "${key}" after ${retries} retries`);
+  console.error(
+    `[safeDel] Failed to delete key "${key}" after ${retries} retries`,
+  );
 }
 
 // === MAIN ===
@@ -115,7 +124,9 @@ async function main() {
   const dragonflyPort = Number(process.env.DRAGONFLY_PORT || 6379);
   const dragonflyPassword = process.env.DRAGONFLY_PASSWORD || "";
 
-  console.log(`🐉 Connecting both pub/sub clients to Dragonfly master at ${masterHost}:${dragonflyPort}`);
+  console.log(
+    `🐉 Connecting both pub/sub clients to Dragonfly master at ${masterHost}:${dragonflyPort}`,
+  );
 
   // --- Shared Redis clients (pub/sub on same node) ---
   const pubClient = new Redis({
@@ -136,7 +147,9 @@ async function main() {
       console.log(`✅ ${name} ready`);
       if (isPub) redisUpGauge.set(1);
     });
-    client.on("reconnecting", (delay: number) => console.warn(`🔁 ${name} reconnecting in ${delay}ms`));
+    client.on("reconnecting", (delay: number) =>
+      console.warn(`🔁 ${name} reconnecting in ${delay}ms`),
+    );
     client.on("close", () => {
       console.warn(`❌ ${name} connection closed`);
       if (isPub) redisUpGauge.set(0);
@@ -231,7 +244,10 @@ async function main() {
       if (sockets.length <= 1) io.to(socket.id).emit("first-in-room");
       else socket.broadcast.to(roomID).emit("new-user", socket.id);
 
-      io.in(roomID).emit("room-user-change", sockets.map((s) => s.id));
+      io.in(roomID).emit(
+        "room-user-change",
+        sockets.map((s) => s.id),
+      );
     });
 
     socket.on("server-broadcast", (roomID, encryptedData, iv) => {
@@ -241,7 +257,9 @@ async function main() {
 
     socket.on("server-volatile-broadcast", (roomID, encryptedData, iv) => {
       messageEmitCounter.inc({ event: "server-volatile-broadcast" });
-      socket.volatile.broadcast.to(roomID).emit("client-broadcast", encryptedData, iv);
+      socket.volatile.broadcast
+        .to(roomID)
+        .emit("client-broadcast", encryptedData, iv);
     });
 
     socket.on("user-follow", async (payload: OnUserFollowedPayload) => {
@@ -253,7 +271,7 @@ async function main() {
       const sockets = await io.in(roomID).fetchSockets();
       io.to(payload.userToFollow.socketId).emit(
         "user-follow-room-change",
-        sockets.map((s) => s.id)
+        sockets.map((s) => s.id),
       );
     });
 
@@ -266,12 +284,17 @@ async function main() {
 
       const rooms = Array.from(socket.rooms);
       for (const roomId of rooms) {
-        const others = (await io.in(roomId).fetchSockets()).filter((s) => s.id !== socket.id);
+        const others = (await io.in(roomId).fetchSockets()).filter(
+          (s) => s.id !== socket.id,
+        );
         if (others.length === 0) roomUserCountGauge.remove({ room: roomId });
         else roomUserCountGauge.set({ room: roomId }, others.length);
 
         if (!roomId.startsWith("follow@") && others.length > 0) {
-          socket.broadcast.to(roomId).emit("room-user-change", others.map((s) => s.id));
+          socket.broadcast.to(roomId).emit(
+            "room-user-change",
+            others.map((s) => s.id),
+          );
         }
       }
 
@@ -300,7 +323,11 @@ async function main() {
 }
 
 // === Global error guards ===
-process.on("unhandledRejection", (reason) => console.error("Unhandled Rejection:", reason));
-process.on("uncaughtException", (err) => console.error("Uncaught Exception:", err));
+process.on("unhandledRejection", (reason) =>
+  console.error("Unhandled Rejection:", reason),
+);
+process.on("uncaughtException", (err) =>
+  console.error("Uncaught Exception:", err),
+);
 
 main().catch((err) => console.error("Fatal startup error:", err));
