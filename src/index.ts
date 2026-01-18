@@ -38,6 +38,26 @@ app.get("/", (_, res) => {
   res.send("🐉 Dragonfly-backed Rita Room server is running!");
 });
 
+// Health check endpoint for Docker/Kubernetes
+app.get("/health", (_, res) => {
+  const isRedisConnected = pubClient?.status === "ready";
+  const healthStatus = {
+    status: isRedisConnected ? "healthy" : "degraded",
+    timestamp: new Date().toISOString(),
+    redis: {
+      connected: isRedisConnected,
+      status: pubClient?.status || "unknown",
+    },
+    uptime: process.uptime(),
+  };
+
+  if (isRedisConnected) {
+    res.status(200).json(healthStatus);
+  } else {
+    res.status(503).json(healthStatus);
+  }
+});
+
 const server = http.createServer(app);
 
 // === Prometheus metrics ===
