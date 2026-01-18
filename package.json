@@ -13,7 +13,7 @@
     "dotenv": "^17.2.2",
     "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-prettier": "^5.5.5",
     "express": "5.1.0",
     "ioredis": "^5.7.0",
     "prettier": "^3.8.0",
