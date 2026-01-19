@@ -15,7 +15,7 @@
     "@excalidraw/prettier-config": "1.0.2",
     "@types/debug": "4.1.12",
     "@types/express": "5.0.6",
-    "@types/node": "24.6.2",
+    "@types/node": "25.0.9",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
     "@typescript-eslint/parser": "^8.53.0",
     "cross-env": "10.1.0",
