@@ -51,7 +51,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: v${{ needs.release.outputs.new-release-version }}
+          ref: master
+          fetch-depth: 0
+
+      - name: Checkout release tag
+        run: |
+          git fetch --tags
+          git checkout v${{ needs.release.outputs.new-release-version }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
