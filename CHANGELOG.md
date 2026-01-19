@@ -1,3 +1,13 @@
+## [1.5.0](https://github.com/farapholch/rita-room/compare/v1.4.0...v1.5.0) (2026-01-19)
+
+### Features
+
+* implement hybrid release strategy ([7509aed](https://github.com/farapholch/rita-room/commit/7509aed41d66758572aac7b9cb07e2bedf43b7e5))
+
+### Bug Fixes
+
+* restore push trigger with smart release logic ([2490586](https://github.com/farapholch/rita-room/commit/2490586f3d24c5ce5f024cddea5a9060e168975e))
+
 ## [1.4.0](https://github.com/farapholch/rita-room/compare/v1.3.0...v1.4.0) (2026-01-19)
 
 ### Features
