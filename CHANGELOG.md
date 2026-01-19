@@ -1,3 +1,9 @@
+## [1.1.0](https://github.com/farapholch/rita-room/compare/v1.0.1...v1.1.0) (2026-01-19)
+
+### Features
+
+* add manual Docker publish workflow ([af993ac](https://github.com/farapholch/rita-room/commit/af993accb9a06b7c4b2e0edb14e9a3479aea2c38))
+
 ## [1.0.1](https://github.com/farapholch/rita-room/compare/v1.0.0...v1.0.1) (2026-01-19)
 
 ### Bug Fixes
