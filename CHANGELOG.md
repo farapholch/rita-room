@@ -1,3 +1,9 @@
+## [1.2.2](https://github.com/farapholch/rita-room/compare/v1.2.1...v1.2.2) (2026-01-19)
+
+### Bug Fixes
+
+* switch to Alpine base image to reduce vulnerabilities ([af62d44](https://github.com/farapholch/rita-room/commit/af62d4408324c3af12c93cd50d07c642cd3943f8))
+
 ## [1.2.1](https://github.com/farapholch/rita-room/compare/v1.2.0...v1.2.1) (2026-01-19)
 
 ### Bug Fixes
