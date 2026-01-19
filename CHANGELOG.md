@@ -1,3 +1,11 @@
+## [1.2.1](https://github.com/farapholch/rita-room/compare/v1.2.0...v1.2.1) (2026-01-19)
+
+### Bug Fixes
+
+* correct Docker Hub login conditional syntax ([a5619d8](https://github.com/farapholch/rita-room/commit/a5619d885c6d7691b0618711eefdde679f7ba34c))
+* make Docker Hub publishing optional if secrets not configured ([14789ab](https://github.com/farapholch/rita-room/commit/14789aba068254c5216c3543c4898777961d5010))
+* use correct Docker Hub secret names (DOCKERHUBNAME and DOCKERHUBPWD) ([66d6ddb](https://github.com/farapholch/rita-room/commit/66d6ddb6bd9043424d4c430f07b8b9fbdbe30b43))
+
 ## [1.2.0](https://github.com/farapholch/rita-room/compare/v1.1.0...v1.2.0) (2026-01-19)
 
 ### Features
