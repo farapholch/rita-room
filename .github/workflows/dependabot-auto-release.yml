@@ -37,11 +37,28 @@ jobs:
       - name: Create release commit
         if: steps.check.outputs.dependabot_commits >= 3
         run: |
-          git commit --allow-empty -m "chore: auto-release for dependabot updates
+          git commit --allow-empty -m "fix: dependency updates
 
           - Triggered by ${{ steps.check.outputs.dependabot_commits }} dependency updates
-          - ${{ github.event.pull_request.title }}"
+          - ${{ github.event.pull_request.title }}
+          
+          This is a security/maintenance release."
           git push origin master
+
+      - name: Trigger release
+        if: steps.check.outputs.dependabot_commits >= 3
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'auto-release.yml',
+              ref: 'master',
+              inputs: {
+                reason: 'Dependabot updates batch release'
+              }
+            })
 
       - name: Comment on PR
         if: steps.check.outputs.dependabot_commits >= 3

@@ -1,0 +1,59 @@
+name: Scheduled Security Release
+
+on:
+  schedule:
+    # Run daily at 02:00 UTC to check for security fixes
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  packages: write
+
+jobs:
+  check-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for unreleased fixes
+        id: check
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -z "$LAST_TAG" ]; then
+            echo "has-fixes=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Check for fix/security commits since last release
+          FIX_COMMITS=$(git log $LAST_TAG..HEAD --oneline --grep="^fix:" --grep="^security:" --grep="^perf:" -i)
+          
+          if [ -n "$FIX_COMMITS" ]; then
+            echo "has-fixes=true" >> $GITHUB_OUTPUT
+            echo "Found unreleased fixes:"
+            echo "$FIX_COMMITS"
+          else
+            echo "has-fixes=false" >> $GITHUB_OUTPUT
+            echo "No unreleased fixes found"
+          fi
+
+      - name: Trigger release workflow
+        if: steps.check.outputs.has-fixes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'auto-release.yml',
+              ref: 'master',
+              inputs: {
+                reason: 'Scheduled security/fix release'
+              }
+            })

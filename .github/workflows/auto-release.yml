@@ -1,9 +1,12 @@
 name: Auto Release
 
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual release'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -12,7 +15,42 @@ permissions:
   packages: write
 
 jobs:
+  check-commits:
+    runs-on: ubuntu-latest
+    outputs:
+      should-release: ${{ steps.check.outputs.should-release }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for fix/security commits
+        id: check
+        run: |
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -z "$LAST_TAG" ]; then
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "No previous tag, will create first release"
+            exit 0
+          fi
+          
+          # Check if any commits are fix/security related
+          FIX_COMMITS=$(git log $LAST_TAG..HEAD --oneline --grep="^fix:" --grep="^security:" --grep="^perf:" -i | wc -l)
+          
+          if [ "$FIX_COMMITS" -gt 0 ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "Found $FIX_COMMITS fix/security commits or manual trigger"
+          else
+            echo "should-release=false" >> $GITHUB_OUTPUT
+            echo "No fix/security commits found. Use workflow_dispatch for feature releases."
+          fi
+
   release:
+    needs: check-commits
+    if: needs.check-commits.outputs.should-release == 'true'
     runs-on: ubuntu-latest
     outputs:
       new-release-published: ${{ steps.semantic.outputs.new-release-published }}
