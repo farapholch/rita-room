@@ -1,3 +1,9 @@
+## [1.2.3](https://github.com/farapholch/rita-room/compare/v1.2.2...v1.2.3) (2026-01-19)
+
+### Bug Fixes
+
+* improve Trivy scan error handling in security workflow ([374f61b](https://github.com/farapholch/rita-room/commit/374f61be97c354871c85e39d477a018c757aed77))
+
 ## [1.2.2](https://github.com/farapholch/rita-room/compare/v1.2.1...v1.2.2) (2026-01-19)
 
 ### Bug Fixes
