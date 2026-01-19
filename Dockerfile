@@ -5,8 +5,6 @@ WORKDIR /excalidraw-room
 # Install dependencies needed for native modules
 RUN apk add --no-cache python3 make g++
 
-RUN npm install -g yarn
-
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
@@ -21,8 +19,6 @@ WORKDIR /excalidraw-room
 
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
-
-RUN npm install -g yarn
 
 COPY package.json yarn.lock ./
 RUN yarn install --production --frozen-lockfile && yarn cache clean
