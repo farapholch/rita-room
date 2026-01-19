@@ -1,3 +1,9 @@
+## [1.2.0](https://github.com/farapholch/rita-room/compare/v1.1.0...v1.2.0) (2026-01-19)
+
+### Features
+
+* add Docker Hub publishing to workflows ([b576ab2](https://github.com/farapholch/rita-room/commit/b576ab2a785571812194b8fed153815d0ca24a94))
+
 ## [1.1.0](https://github.com/farapholch/rita-room/compare/v1.0.1...v1.1.0) (2026-01-19)
 
 ### Features
