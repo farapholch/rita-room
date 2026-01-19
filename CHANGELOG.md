@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/farapholch/rita-room/compare/v1.0.0...v1.0.1) (2026-01-19)
+
+### Bug Fixes
+
+* improve Docker checkout in auto-release workflow ([0286ec5](https://github.com/farapholch/rita-room/commit/0286ec55cbcee2be04880c90134d223e99582c0d))
+
 ## 1.0.0 (2026-01-19)
 
 ### Features
