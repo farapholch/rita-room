@@ -1,0 +1,68 @@
+name: Dependabot Auto Release
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  check-and-release:
+    # Only run if PR was merged and created by dependabot
+    if: github.event.pull_request.merged == true && github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check recent dependabot merges
+        id: check
+        run: |
+          # Count dependabot commits in the last 24 hours
+          SINCE=$(date -u -d '24 hours ago' +"%Y-%m-%dT%H:%M:%SZ")
+          DEPENDABOT_COMMITS=$(git log --since="$SINCE" --author="dependabot" --oneline | wc -l)
+          
+          echo "dependabot_commits=$DEPENDABOT_COMMITS" >> $GITHUB_OUTPUT
+          echo "Found $DEPENDABOT_COMMITS dependabot commits in last 24 hours"
+
+      - name: Create release commit
+        if: steps.check.outputs.dependabot_commits >= 3
+        run: |
+          git commit --allow-empty -m "chore: auto-release for dependabot updates
+
+          - Triggered by ${{ steps.check.outputs.dependabot_commits }} dependency updates
+          - ${{ github.event.pull_request.title }}"
+          git push origin master
+
+      - name: Comment on PR
+        if: steps.check.outputs.dependabot_commits >= 3
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Auto-release triggered! This dependency update (along with ${{ steps.check.outputs.dependabot_commits }} others) will be included in the next release.'
+            })
+
+      - name: Comment on PR (no release)
+        if: steps.check.outputs.dependabot_commits < 3
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Dependency updated. Auto-release will trigger after 3+ dependency updates within 24 hours.'
+            })
