@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version tag to build (e.g., 1.0.1)'
-        required: true
+        description: 'Version tag to build (e.g., 1.0.1). Leave empty for latest tag.'
+        required: false
         type: string
 
 permissions:
@@ -19,7 +19,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: v${{ inputs.version }}
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "tag=v${{ inputs.version }}" >> $GITHUB_OUTPUT
+            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            LATEST_TAG=$(git describe --tags --abbrev=0)
+            echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+            echo "version=${LATEST_TAG#v}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout version
+        run: git checkout ${{ steps.version.outputs.tag }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -50,9 +65,9 @@ jobs:
             ghcr.io/${{ steps.repo.outputs.repo }}
             ${{ secrets.DOCKERHUBNAME != '' && format('{0}/rita-room', secrets.DOCKERHUBNAME) || '' }}
           tags: |
-            type=raw,value=${{ inputs.version }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.version }}
-            type=semver,pattern={{major}},value=${{ inputs.version }}
+            type=raw,value=${{ steps.version.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }}
+            type=semver,pattern={{major}},value=${{ steps.version.outputs.version }}
             type=raw,value=latest
 
       - name: Build and push Docker image
