@@ -93,14 +93,18 @@ const redisUpGauge = new Gauge({
   help: "1 if connected to Redis/Dragonfly pub client, 0 if disconnected",
 });
 
+// === Redis clients (declared at module scope) ===
+let pubClient: Redis;
+let subClient: Redis;
+
 // === Redis helpers: retry on master ===
 async function safeSet(client: Redis, key: string, value: string, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
       await client.set(key, value);
       return;
-    } catch (err: any) {
-      const msg = String(err?.message || err);
+    } catch (err: unknown) {
+      const msg = String((err as any)?.message || err);
       if (msg.includes("READONLY")) {
         console.warn(
           `[safeSet] READONLY key="${key}" — retrying in 200ms (attempt ${i + 1})`,
@@ -121,8 +125,8 @@ async function safeDel(client: Redis, key: string, retries = 3) {
     try {
       await client.del(key);
       return;
-    } catch (err: any) {
-      const msg = String(err?.message || err);
+    } catch (err: unknown) {
+      const msg = String((err as any)?.message || err);
       if (msg.includes("READONLY")) {
         console.warn(
           `[safeDel] READONLY key="${key}" — retrying in 200ms (attempt ${i + 1})`,
@@ -149,7 +153,7 @@ async function main() {
   );
 
   // --- Shared Redis clients (pub/sub on same node) ---
-  const pubClient = new Redis({
+  pubClient = new Redis({
     host: masterHost,
     port: dragonflyPort,
     password: dragonflyPassword || undefined,
@@ -159,7 +163,7 @@ async function main() {
     },
   });
 
-  const subClient = pubClient.duplicate();
+  subClient = pubClient.duplicate();
 
   const setupClientLogging = (client: Redis, name: string, isPub = false) => {
     client.on("connect", () => console.log(`✅ ${name} TCP connect`));
