@@ -1,3 +1,9 @@
+## [1.4.0](https://github.com/farapholch/rita-room/compare/v1.3.0...v1.4.0) (2026-01-19)
+
+### Features
+
+* add automatic release for dependabot updates ([f8145a5](https://github.com/farapholch/rita-room/commit/f8145a591ccc690c0b97b8e0590c86d13a8af144))
+
 ## [1.3.0](https://github.com/farapholch/rita-room/compare/v1.2.4...v1.3.0) (2026-01-19)
 
 ### Features
