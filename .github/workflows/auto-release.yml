@@ -1,6 +1,9 @@
 name: Auto Release
 
 on:
+  push:
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       reason:
@@ -19,13 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       should-release: ${{ steps.check.outputs.should-release }}
+      release-type: ${{ steps.check.outputs.release-type }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check for fix/security commits
+      - name: Check commit type
         id: check
         run: |
           # Get commits since last tag
@@ -33,19 +37,30 @@ jobs:
           
           if [ -z "$LAST_TAG" ]; then
             echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "release-type=first" >> $GITHUB_OUTPUT
             echo "No previous tag, will create first release"
             exit 0
           fi
           
-          # Check if any commits are fix/security related
+          # Check if manual trigger
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "release-type=manual" >> $GITHUB_OUTPUT
+            echo "Manual release triggered"
+            exit 0
+          fi
+          
+          # Check for fix/security/perf commits (auto-release)
           FIX_COMMITS=$(git log $LAST_TAG..HEAD --oneline --grep="^fix:" --grep="^security:" --grep="^perf:" -i | wc -l)
           
-          if [ "$FIX_COMMITS" -gt 0 ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          if [ "$FIX_COMMITS" -gt 0 ]; then
             echo "should-release=true" >> $GITHUB_OUTPUT
-            echo "Found $FIX_COMMITS fix/security commits or manual trigger"
+            echo "release-type=auto-fix" >> $GITHUB_OUTPUT
+            echo "Found $FIX_COMMITS fix/security/perf commits - auto-releasing"
           else
             echo "should-release=false" >> $GITHUB_OUTPUT
-            echo "No fix/security commits found. Use workflow_dispatch for feature releases."
+            echo "release-type=skip" >> $GITHUB_OUTPUT
+            echo "Only feat/chore commits - skipping auto-release (use workflow_dispatch for manual release)"
           fi
 
   release:
