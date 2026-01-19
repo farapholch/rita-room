@@ -1,6 +1,9 @@
-FROM registry.access.redhat.com/ubi9/nodejs-22-minimal:1 AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /excalidraw-room
+
+# Install dependencies needed for native modules
+RUN apk add --no-cache python3 make g++
 
 RUN npm install -g yarn
 
@@ -12,9 +15,12 @@ COPY src ./src
 
 RUN yarn build
 
-FROM registry.access.redhat.com/ubi9/nodejs-22-minimal:1
+FROM node:22-alpine
 
 WORKDIR /excalidraw-room
+
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init
 
 RUN npm install -g yarn
 
@@ -30,6 +36,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 EXPOSE 80
 
 # Use non-root user for security
-USER 1001
+USER node
 
+ENTRYPOINT ["dumb-init", "--"]
 CMD ["yarn", "start"]
