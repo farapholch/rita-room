@@ -13,6 +13,8 @@
   "devDependencies": {
     "@excalidraw/eslint-config": "1.0.3",
     "@excalidraw/prettier-config": "1.0.2",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@types/debug": "4.1.12",
     "@types/express": "5.0.6",
     "@types/node": "25.0.9",
@@ -23,6 +25,7 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "prettier": "^3.8.0",
+    "semantic-release": "^24.2.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "5.9.3"
   },
