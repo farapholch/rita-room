@@ -1,3 +1,9 @@
+## [1.3.0](https://github.com/farapholch/rita-room/compare/v1.2.4...v1.3.0) (2026-01-19)
+
+### Features
+
+* make version optional in Docker publish workflow (defaults to latest tag) ([e6220fb](https://github.com/farapholch/rita-room/commit/e6220fb36fa99a723029f426251aca4671360484))
+
 ## [1.2.4](https://github.com/farapholch/rita-room/compare/v1.2.3...v1.2.4) (2026-01-19)
 
 ### Bug Fixes
