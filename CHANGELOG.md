@@ -1,3 +1,9 @@
+## [1.2.4](https://github.com/farapholch/rita-room/compare/v1.2.3...v1.2.4) (2026-01-19)
+
+### Bug Fixes
+
+* remove redundant yarn install from Dockerfile (already included in Alpine image) ([c33d149](https://github.com/farapholch/rita-room/commit/c33d1493f61acbf59c7c0c9e1a8f35f9de083b1a))
+
 ## [1.2.3](https://github.com/farapholch/rita-room/compare/v1.2.2...v1.2.3) (2026-01-19)
 
 ### Bug Fixes
