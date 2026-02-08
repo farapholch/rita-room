@@ -3,7 +3,7 @@
   "dependencies": {
     "@socket.io/redis-adapter": "^8.3.0",
     "debug": "4.4.3",
-    "dotenv": "^17.2.2",
+    "dotenv": "^17.2.4",
     "express": "5.2.1",
     "ioredis": "^5.9.2",
     "prom-client": "^15.1.3",
