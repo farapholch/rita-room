@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/farapholch/rita-room/compare/v1.5.0...v1.5.1) (2026-02-10)
+
+### Bug Fixes
+
+* **ci:** add pull-requests and actions permissions to dependabot workflow ([a6a9edf](https://github.com/farapholch/rita-room/commit/a6a9edfc935a1201613cf0c7cc761ba104a5e484))
+* trigger release for workflow permission fix ([cd97bb2](https://github.com/farapholch/rita-room/commit/cd97bb271d22ab8cd25d7fb930f5789007276554))
+
 ## [1.5.0](https://github.com/farapholch/rita-room/compare/v1.4.0...v1.5.0) (2026-01-19)
 
 ### Features
