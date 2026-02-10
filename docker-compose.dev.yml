@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly
+    container_name: rita-room-dragonfly
+    ports:
+      - "6379:6379"
+    ulimits:
+      memlock: -1
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  rita-room:
+    build: .
+    container_name: rita-room-dev
+    ports:
+      - "3002:80"
+    environment:
+      - DRAGONFLY_MASTER_HOST=dragonfly
+      - DRAGONFLY_PORT=6379
+      - CORS_ORIGIN=*
+      - NODE_ENV=development
+    depends_on:
+      dragonfly:
+        condition: service_healthy
+    restart: unless-stopped
