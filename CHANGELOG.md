@@ -1,3 +1,9 @@
+## [1.5.2](https://github.com/farapholch/rita-room/compare/v1.5.1...v1.5.2) (2026-03-01)
+
+### Bug Fixes
+
+* dependency updates ([6f99933](https://github.com/farapholch/rita-room/commit/6f999331af97c1338e1ea09962d5eebb4df586c8))
+
 ## [1.5.1](https://github.com/farapholch/rita-room/compare/v1.5.0...v1.5.1) (2026-02-10)
 
 ### Bug Fixes
