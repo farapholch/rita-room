@@ -1,3 +1,9 @@
+## [1.5.3](https://github.com/farapholch/rita-room/compare/v1.5.2...v1.5.3) (2026-03-01)
+
+### Bug Fixes
+
+* correct semantic-release output variable names ([f335570](https://github.com/farapholch/rita-room/commit/f3355708b2dc34ab303d92cab5d9de69a55f85df))
+
 ## [1.5.2](https://github.com/farapholch/rita-room/compare/v1.5.1...v1.5.2) (2026-03-01)
 
 ### Bug Fixes
