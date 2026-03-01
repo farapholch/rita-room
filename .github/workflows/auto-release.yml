@@ -141,6 +141,9 @@ jobs:
             type=semver,pattern={{major}}.{{minor}},value=${{ needs.release.outputs.new-release-version }}
             type=semver,pattern={{major}},value=${{ needs.release.outputs.new-release-version }}
             type=raw,value=latest
+          labels: |
+            org.opencontainers.image.description=Real-time collaboration backend for Rita (Excalidraw fork) - WebSocket server for whiteboard sessions
+            org.opencontainers.image.vendor=farapholch
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
