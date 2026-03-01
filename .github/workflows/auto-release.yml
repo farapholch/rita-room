@@ -142,6 +142,7 @@ jobs:
             type=semver,pattern={{major}},value=${{ needs.release.outputs.new-release-version }}
             type=raw,value=latest
           labels: |
+            org.opencontainers.image.source=https://github.com/farapholch/rita-room
             org.opencontainers.image.description=Real-time collaboration backend for Rita (Excalidraw fork) - WebSocket server for whiteboard sessions
             org.opencontainers.image.vendor=farapholch
 
