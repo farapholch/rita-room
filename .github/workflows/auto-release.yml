@@ -68,8 +68,8 @@ jobs:
     if: needs.check-commits.outputs.should-release == 'true'
     runs-on: ubuntu-latest
     outputs:
-      new-release-published: ${{ steps.semantic.outputs.new-release-published }}
-      new-release-version: ${{ steps.semantic.outputs.new-release-version }}
+      new-release-published: ${{ steps.semantic.outputs.new_release_published }}
+      new-release-version: ${{ steps.semantic.outputs.new_release_version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -149,5 +149,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
