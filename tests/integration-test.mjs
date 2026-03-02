@@ -15,7 +15,7 @@ async function waitForServer(url, maxRetries = 30) {
         console.log("✓ Server is ready at " + url);
         return true;
       }
-    } catch (e) {
+    } catch {
       // Server not ready yet
     }
     console.log("Waiting for server... (" + (i + 1) + "/" + maxRetries + ")");
@@ -77,7 +77,7 @@ async function testRoomJoin() {
       }, 2000);
     });
 
-    socket.on("room-user-change", (users) => {
+    socket.on("room-user-change", () => {
       if (!resolved) {
         resolved = true;
         console.log("✓ Room joined, received user change event");
