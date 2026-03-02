@@ -80,7 +80,7 @@ jobs:
           exit 1
 
       - name: Run integration tests
-        run: node tests/integration.test.mjs
+        run: node tests/integration-test.mjs
         env:
           SERVER_URL: http://localhost:3002
 
