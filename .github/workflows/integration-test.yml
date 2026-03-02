@@ -1,0 +1,77 @@
+name: Integration Test
+
+on:
+  pull_request:
+    branches: [master, main]
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+
+    services:
+      dragonfly:
+        image: docker.dragonflydb.io/dragonflydb/dragonfly
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "yarn"
+
+      - name: Install dependencies
+        run: yarn --frozen-lockfile
+
+      - name: Build
+        run: yarn build
+
+      - name: Start server
+        run: |
+          node dist/index.js &
+          echo $! > /tmp/server.pid
+        env:
+          PORT: 3002
+          DRAGONFLY_MASTER_HOST: localhost
+          DRAGONFLY_PORT: 6379
+          CORS_ORIGIN: "*"
+          NODE_ENV: test
+
+      - name: Wait for server
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:3002/ > /dev/null 2>&1; then
+              echo "Server is ready"
+              exit 0
+            fi
+            echo "Waiting for server... ($i/30)"
+            sleep 1
+          done
+          echo "Server failed to start"
+          exit 1
+
+      - name: Install test dependencies
+        run: yarn add -D socket.io-client
+
+      - name: Run integration tests
+        run: node tests/integration.test.mjs
+        env:
+          SERVER_URL: http://localhost:3002
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f /tmp/server.pid ]; then
+            kill $(cat /tmp/server.pid) || true
+          fi
