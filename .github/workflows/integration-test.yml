@@ -49,9 +49,20 @@ jobs:
 
       - name: Start server in background
         run: |
-          PORT=3002 DRAGONFLY_MASTER_HOST=localhost DRAGONFLY_PORT=6379 CORS_ORIGIN="*" NODE_ENV=test yarn start &
+          # Find index.js (could be in dist/ or dist/src/ depending on tsconfig)
+          if [ -f dist/index.js ]; then
+            ENTRY="dist/index.js"
+          elif [ -f dist/src/index.js ]; then
+            ENTRY="dist/src/index.js"
+          else
+            echo "Cannot find compiled index.js"
+            find dist -name "index.js" || true
+            exit 1
+          fi
+          echo "Starting server from: $ENTRY"
+          PORT=3002 DRAGONFLY_MASTER_HOST=localhost DRAGONFLY_PORT=6379 CORS_ORIGIN="*" NODE_ENV=test node "$ENTRY" &
           echo $! > /tmp/server.pid
-          sleep 2
+          sleep 3
 
       - name: Wait for server
         run: |
