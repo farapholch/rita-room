@@ -39,7 +39,9 @@ async function testHealthEndpoint() {
     throw new Error("Redis/Dragonfly not connected");
   }
 
-  console.log("✓ Health endpoint OK (status: " + data.status + ", redis: connected)");
+  console.log(
+    "✓ Health endpoint OK (status: " + data.status + ", redis: connected)",
+  );
 }
 
 async function testWebSocketConnection() {
