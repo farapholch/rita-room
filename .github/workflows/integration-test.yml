@@ -37,56 +37,43 @@ jobs:
       - name: Build
         run: yarn build
 
-      - name: Debug - List dist folder
+      - name: Start server with coverage
         run: |
-          echo "=== Checking dist folder ==="
-          ls -la dist/ || echo "dist folder not found"
-          echo "=== Checking src folder ==="
-          ls -la src/
-
-      - name: Install test dependencies
-        run: yarn add -D socket.io-client
-
-      - name: Start server in background
-        run: |
-          # Find index.js (could be in dist/ or dist/src/ depending on tsconfig)
-          if [ -f dist/index.js ]; then
-            ENTRY="dist/index.js"
-          elif [ -f dist/src/index.js ]; then
-            ENTRY="dist/src/index.js"
-          else
-            echo "Cannot find compiled index.js"
-            find dist -name "index.js" || true
-            exit 1
-          fi
-          echo "Starting server from: $ENTRY"
-          PORT=3002 DRAGONFLY_MASTER_HOST=localhost DRAGONFLY_PORT=6379 CORS_ORIGIN="*" NODE_ENV=test node "$ENTRY" &
+          PORT=3002 DRAGONFLY_MASTER_HOST=localhost DRAGONFLY_PORT=6379 CORS_ORIGIN="*" NODE_ENV=test \
+            npx c8 --reporter=text --reporter=lcov --report-dir=coverage node dist/index.js &
           echo $! > /tmp/server.pid
           sleep 3
 
       - name: Wait for server
         run: |
           for i in {1..30}; do
-            if nc -z localhost 3002 2>/dev/null; then
-              echo "Server is listening on port 3002"
+            if curl -s http://localhost:3002/health > /dev/null 2>&1; then
+              echo "Server is healthy"
               exit 0
             fi
             echo "Waiting for server... ($i/30)"
             sleep 1
           done
           echo "Server failed to start"
-          # Show any error output
-          cat /tmp/server.log 2>/dev/null || true
           exit 1
 
       - name: Run integration tests
-        run: node tests/integration-test.mjs
+        run: yarn test:integration
         env:
           SERVER_URL: http://localhost:3002
 
-      - name: Stop server
+      - name: Stop server and generate coverage
         if: always()
         run: |
           if [ -f /tmp/server.pid ]; then
-            kill $(cat /tmp/server.pid) 2>/dev/null || true
+            kill -SIGINT $(cat /tmp/server.pid) 2>/dev/null || true
+            sleep 2
           fi
+
+      - name: Upload coverage to Codecov
+        if: success()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+        continue-on-error: true

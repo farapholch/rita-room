@@ -10,7 +10,7 @@ async function sleep(ms) {
 async function waitForServer(url, maxRetries = 30) {
   for (let i = 0; i < maxRetries; i++) {
     try {
-      const response = await fetch(url + "/");
+      const response = await fetch(url + "/health");
       if (response.ok) {
         console.log("✓ Server is ready at " + url);
         return true;
@@ -22,6 +22,26 @@ async function waitForServer(url, maxRetries = 30) {
     await sleep(1000);
   }
   throw new Error("Server not ready after " + maxRetries + " seconds");
+}
+
+async function testHealthEndpoint() {
+  const response = await fetch(SERVER_URL + "/health");
+  if (!response.ok) {
+    throw new Error("Health endpoint returned " + response.status);
+  }
+  const data = await response.json();
+
+  if (data.status !== "healthy") {
+    throw new Error("Server status is " + data.status + ", expected healthy");
+  }
+
+  if (!data.redis || !data.redis.connected) {
+    throw new Error("Redis/Dragonfly not connected");
+  }
+
+  console.log(
+    "✓ Health endpoint OK (status: " + data.status + ", redis: connected)",
+  );
 }
 
 async function testWebSocketConnection() {
@@ -148,13 +168,16 @@ async function runTests() {
   try {
     await waitForServer(SERVER_URL);
 
-    console.log("\n--- Test 1: WebSocket Connection ---");
+    console.log("\n--- Test 1: Health Endpoint ---");
+    await testHealthEndpoint();
+
+    console.log("\n--- Test 2: WebSocket Connection ---");
     await testWebSocketConnection();
 
-    console.log("\n--- Test 2: Room Join ---");
+    console.log("\n--- Test 3: Room Join ---");
     await testRoomJoin();
 
-    console.log("\n--- Test 3: Multiple Clients ---");
+    console.log("\n--- Test 4: Multiple Clients ---");
     await testMultipleClients();
 
     console.log("\n✅ All tests passed!\n");
