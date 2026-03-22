@@ -15,7 +15,7 @@
     "@excalidraw/prettier-config": "1.0.2",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
-    "@types/debug": "4.1.12",
+    "@types/debug": "4.1.13",
     "@types/express": "5.0.6",
     "@types/node": "25.5.0",
     "@typescript-eslint/eslint-plugin": "^8.56.1",
