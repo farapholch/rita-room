@@ -305,7 +305,10 @@ async function main() {
     socket.on("server-volatile-broadcast", (roomID, encryptedData, iv) => {
       const dataSize = encryptedData?.length || 0;
       messageEmitCounter.inc({ event: "server-volatile-broadcast" });
-      messageSizeHistogram.observe({ event: "server-volatile-broadcast" }, dataSize);
+      messageSizeHistogram.observe(
+        { event: "server-volatile-broadcast" },
+        dataSize,
+      );
       if (dataSize > 1e6) {
         largeMessageCounter.inc({ event: "server-volatile-broadcast" });
         console.log(
