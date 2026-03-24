@@ -180,7 +180,7 @@ async function main() {
     console.error("  PORT                   Server port (default: 80)");
     console.error("  CORS_ORIGIN            CORS origins (default: *)");
     console.error("  MAX_PAYLOAD_SIZE       Max message size (default: 25MB)");
-    console.error("  ROOM_CLEANUP_TTL       Room TTL in seconds (default: 3600)");
+    console.error("  ROOM_CLEANUP_TTL       Room TTL (default: 3600s)");
     process.exit(1);
   }
 
