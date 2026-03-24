@@ -2,7 +2,7 @@ import debug from "debug";
 import express from "express";
 import http from "http";
 import { Server as SocketIO } from "socket.io";
-import { Gauge, Counter, register } from "prom-client";
+import { Gauge, Counter, Histogram, register } from "prom-client";
 import Redis from "ioredis";
 import { createAdapter } from "@socket.io/redis-adapter";
 import dotenv from "dotenv";
@@ -91,6 +91,17 @@ const disconnectCounter = new Counter({
 const redisUpGauge = new Gauge({
   name: "redis_up",
   help: "1 if connected to Redis/Dragonfly pub client, 0 if disconnected",
+});
+const messageSizeHistogram = new Histogram({
+  name: "socket_io_message_size_bytes",
+  help: "Size of broadcast messages in bytes",
+  labelNames: ["event"],
+  buckets: [1e4, 1e5, 5e5, 1e6, 5e6, 10e6, 25e6], // 10KB, 100KB, 500KB, 1MB, 5MB, 10MB, 25MB
+});
+const largeMessageCounter = new Counter({
+  name: "socket_io_large_message_count",
+  help: "Number of messages exceeding 1MB",
+  labelNames: ["event"],
 });
 
 // === Redis clients (declared at module scope) ===
@@ -199,6 +210,9 @@ async function main() {
   }
 
   // === Socket.IO setup ===
+  const maxPayloadSize = Number(process.env.MAX_PAYLOAD_SIZE) || 25e6; // 25 MB default
+  console.log(`📦 Max payload size: ${(maxPayloadSize / 1e6).toFixed(1)} MB`);
+
   const io = new SocketIO(server, {
     transports: ["websocket", "polling"],
     cors: {
@@ -209,6 +223,7 @@ async function main() {
     allowEIO3: true,
     pingInterval: 25000,
     pingTimeout: 60000,
+    maxHttpBufferSize: maxPayloadSize,
   });
 
   // ✅ Shared adapter (fixes multi-pod sync)
@@ -275,12 +290,28 @@ async function main() {
     });
 
     socket.on("server-broadcast", (roomID, encryptedData, iv) => {
+      const dataSize = encryptedData?.length || 0;
       messageEmitCounter.inc({ event: "server-broadcast" });
+      messageSizeHistogram.observe({ event: "server-broadcast" }, dataSize);
+      if (dataSize > 1e6) {
+        largeMessageCounter.inc({ event: "server-broadcast" });
+        console.log(
+          `📦 Large broadcast: ${(dataSize / 1e6).toFixed(2)} MB to room ${roomID}`,
+        );
+      }
       socket.broadcast.to(roomID).emit("client-broadcast", encryptedData, iv);
     });
 
     socket.on("server-volatile-broadcast", (roomID, encryptedData, iv) => {
+      const dataSize = encryptedData?.length || 0;
       messageEmitCounter.inc({ event: "server-volatile-broadcast" });
+      messageSizeHistogram.observe({ event: "server-volatile-broadcast" }, dataSize);
+      if (dataSize > 1e6) {
+        largeMessageCounter.inc({ event: "server-volatile-broadcast" });
+        console.log(
+          `📦 Large volatile broadcast: ${(dataSize / 1e6).toFixed(2)} MB to room ${roomID}`,
+        );
+      }
       socket.volatile.broadcast
         .to(roomID)
         .emit("client-broadcast", encryptedData, iv);

@@ -32,6 +32,7 @@ docker run -d \
 | `CORS_ORIGIN` | CORS allowed origins | * |
 | `PORT` | Server listening port | 80 |
 | `NODE_ENV` | Environment mode | production |
+| `MAX_PAYLOAD_SIZE` | Max WebSocket message size in bytes | 25000000 (25 MB) |
 
 ## Docker Compose Example
 
