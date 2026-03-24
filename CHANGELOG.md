@@ -1,3 +1,9 @@
+## [1.6.1](https://github.com/farapholch/rita-room/compare/v1.6.0...v1.6.1) (2026-03-24)
+
+### Bug Fixes
+
+* increase max payload size to 25MB to prevent infinite reconnect loops ([12f1e6d](https://github.com/farapholch/rita-room/commit/12f1e6dcbdffac2d42a87ab6c244e3a3c8144373))
+
 ## [1.6.0](https://github.com/farapholch/rita-room/compare/v1.5.3...v1.6.0) (2026-03-24)
 
 ### Features
