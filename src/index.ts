@@ -155,6 +155,24 @@ async function safeDel(client: Redis, key: string, retries = 3) {
 
 // === MAIN ===
 async function main() {
+  // === Environment validation ===
+  const requiredEnvVars = ["DRAGONFLY_MASTER_HOST"];
+  const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
+
+  if (missingVars.length > 0) {
+    console.error("❌ Missing required environment variables:");
+    missingVars.forEach((v) => console.error(`   - ${v}`));
+    console.error("\nRequired variables:");
+    console.error("  DRAGONFLY_MASTER_HOST  Redis/Dragonfly host");
+    console.error("\nOptional variables:");
+    console.error("  DRAGONFLY_PORT         Redis port (default: 6379)");
+    console.error("  DRAGONFLY_PASSWORD     Redis password");
+    console.error("  PORT                   Server port (default: 80)");
+    console.error("  CORS_ORIGIN            CORS origins (default: *)");
+    console.error("  MAX_PAYLOAD_SIZE       Max message size (default: 25MB)");
+    process.exit(1);
+  }
+
   const masterHost = process.env.DRAGONFLY_MASTER_HOST;
   const dragonflyPort = Number(process.env.DRAGONFLY_PORT || 6379);
   const dragonflyPassword = process.env.DRAGONFLY_PASSWORD || "";
