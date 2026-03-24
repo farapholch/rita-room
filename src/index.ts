@@ -330,6 +330,54 @@ async function main() {
 
   server.listen(port, () => serverDebug(`listening on port: ${port}`));
 
+  // === Graceful shutdown ===
+  let isShuttingDown = false;
+
+  const shutdown = async (signal: string) => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+
+    console.log(`\n🛑 Received ${signal}, shutting down gracefully...`);
+
+    // Stop accepting new connections
+    server.close(() => {
+      console.log("✅ HTTP server closed");
+    });
+
+    // Close all socket connections
+    try {
+      const sockets = await io.fetchSockets();
+      console.log(`📡 Disconnecting ${sockets.length} socket(s)...`);
+      io.close(() => {
+        console.log("✅ Socket.IO closed");
+      });
+    } catch (err) {
+      console.error("Error closing Socket.IO:", err);
+    }
+
+    // Close Redis connections
+    try {
+      await Promise.race([
+        Promise.all([pubClient.quit(), subClient.quit()]),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Redis quit timeout")), 5000),
+        ),
+      ]);
+      console.log("✅ Redis connections closed");
+    } catch (err) {
+      console.error("Error closing Redis:", err);
+      // Force disconnect if quit times out
+      pubClient.disconnect();
+      subClient.disconnect();
+    }
+
+    console.log("👋 Shutdown complete");
+    process.exit(0);
+  };
+
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
+
   // === Metrics endpoint ===
   server.on("request", async (req, res) => {
     if (req.url === "/metrics") {
