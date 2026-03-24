@@ -1,3 +1,9 @@
+## [1.6.2](https://github.com/farapholch/rita-room/compare/v1.6.1...v1.6.2) (2026-03-24)
+
+### Bug Fixes
+
+* add environment variable validation at startup ([b7b6302](https://github.com/farapholch/rita-room/commit/b7b6302d1893d31caa11b94dac481df9273d6496))
+
 ## [1.6.1](https://github.com/farapholch/rita-room/compare/v1.6.0...v1.6.1) (2026-03-24)
 
 ### Bug Fixes
