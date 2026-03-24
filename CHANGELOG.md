@@ -1,3 +1,9 @@
+## [1.6.4](https://github.com/farapholch/rita-room/compare/v1.6.3...v1.6.4) (2026-03-24)
+
+### Bug Fixes
+
+* add .eslintignore and fix line length ([26cec79](https://github.com/farapholch/rita-room/commit/26cec79acbf45ebd558e9c36b4c74c838bea268e))
+
 ## [1.6.3](https://github.com/farapholch/rita-room/compare/v1.6.2...v1.6.3) (2026-03-24)
 
 ### Bug Fixes
