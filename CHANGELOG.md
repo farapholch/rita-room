@@ -1,3 +1,14 @@
+## [1.6.0](https://github.com/farapholch/rita-room/compare/v1.5.3...v1.6.0) (2026-03-24)
+
+### Features
+
+* add integration tests with Dragonfly ([#74](https://github.com/farapholch/rita-room/issues/74)) ([cb5c310](https://github.com/farapholch/rita-room/commit/cb5c310657117ffdb7c3d45253208d72ca6e39af))
+* tsconfig fix, health tests, code coverage ([#75](https://github.com/farapholch/rita-room/issues/75)) ([6216b6b](https://github.com/farapholch/rita-room/commit/6216b6b8851ef11d3af014869add0d55a2f694c8))
+
+### Bug Fixes
+
+* add graceful shutdown handling for SIGTERM/SIGINT ([285c34b](https://github.com/farapholch/rita-room/commit/285c34b628049352cc644314848e1dd2c252c7a3))
+
 ## [1.5.3](https://github.com/farapholch/rita-room/compare/v1.5.2...v1.5.3) (2026-03-01)
 
 ### Bug Fixes
