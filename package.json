@@ -53,5 +53,5 @@
     "test:integration": "node tests/integration-test.mjs",
     "test:coverage": "c8 --reporter=text --reporter=lcov node dist/index.js"
   },
-  "version": "1.6.2"
+  "version": "1.6.3"
 }

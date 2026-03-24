@@ -1,3 +1,9 @@
+## [1.6.3](https://github.com/farapholch/rita-room/compare/v1.6.2...v1.6.3) (2026-03-24)
+
+### Bug Fixes
+
+* add automatic room cleanup with configurable TTL ([77386e9](https://github.com/farapholch/rita-room/commit/77386e9257aadb3769975731e2e8b4a4ee592c6a))
+
 ## [1.6.2](https://github.com/farapholch/rita-room/compare/v1.6.1...v1.6.2) (2026-03-24)
 
 ### Bug Fixes
