@@ -33,6 +33,7 @@ docker run -d \
 | `PORT` | Server listening port | 80 |
 | `NODE_ENV` | Environment mode | production |
 | `MAX_PAYLOAD_SIZE` | Max WebSocket message size in bytes | 25000000 (25 MB) |
+| `ROOM_CLEANUP_TTL` | Room key TTL in Redis (seconds) | 3600 (1 hour) |
 
 ## Docker Compose Example
 

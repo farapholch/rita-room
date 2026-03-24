@@ -109,10 +109,20 @@ let pubClient: Redis;
 let subClient: Redis;
 
 // === Redis helpers: retry on master ===
-async function safeSet(client: Redis, key: string, value: string, retries = 3) {
+async function safeSet(
+  client: Redis,
+  key: string,
+  value: string,
+  ttlSeconds?: number,
+  retries = 3,
+) {
   for (let i = 0; i < retries; i++) {
     try {
-      await client.set(key, value);
+      if (ttlSeconds && ttlSeconds > 0) {
+        await client.setex(key, ttlSeconds, value);
+      } else {
+        await client.set(key, value);
+      }
       return;
     } catch (err: unknown) {
       const msg = String((err as any)?.message || err);
@@ -170,12 +180,14 @@ async function main() {
     console.error("  PORT                   Server port (default: 80)");
     console.error("  CORS_ORIGIN            CORS origins (default: *)");
     console.error("  MAX_PAYLOAD_SIZE       Max message size (default: 25MB)");
+    console.error("  ROOM_CLEANUP_TTL       Room key TTL in seconds (default: 3600)");
     process.exit(1);
   }
 
   const masterHost = process.env.DRAGONFLY_MASTER_HOST;
   const dragonflyPort = Number(process.env.DRAGONFLY_PORT || 6379);
   const dragonflyPassword = process.env.DRAGONFLY_PASSWORD || "";
+  const roomCleanupTtl = Number(process.env.ROOM_CLEANUP_TTL || 3600); // 1 hour default
 
   console.log(
     `🐉 Connecting both pub/sub clients to Dragonfly master at ${masterHost}:${dragonflyPort}`,
@@ -230,6 +242,7 @@ async function main() {
   // === Socket.IO setup ===
   const maxPayloadSize = Number(process.env.MAX_PAYLOAD_SIZE) || 25e6; // 25 MB default
   console.log(`📦 Max payload size: ${(maxPayloadSize / 1e6).toFixed(1)} MB`);
+  console.log(`🧹 Room cleanup TTL: ${roomCleanupTtl} seconds`);
 
   const io = new SocketIO(server, {
     transports: ["websocket", "polling"],
@@ -289,7 +302,12 @@ async function main() {
     socket.on("join-room", async (roomID: string) => {
       await socket.join(roomID);
       try {
-        await safeSet(pubClient, `user-room:${socket.id}`, roomID);
+        await safeSet(
+          pubClient,
+          `user-room:${socket.id}`,
+          roomID,
+          roomCleanupTtl,
+        );
       } catch (err) {
         console.error("safeSet failed in join-room:", err);
       }
