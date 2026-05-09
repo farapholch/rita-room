@@ -3,8 +3,9 @@ import express from "express";
 import http from "http";
 import { Server as SocketIO } from "socket.io";
 import { Gauge, Counter, Histogram, register } from "prom-client";
-import Redis from "ioredis";
-import type { Redis as RedisClient } from "ioredis";
+import { Redis } from "ioredis";
+
+type RedisClient = Redis;
 import { createAdapter } from "@socket.io/redis-adapter";
 import dotenv from "dotenv";
 
