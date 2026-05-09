@@ -4,6 +4,8 @@ import http from "http";
 import { Server as SocketIO } from "socket.io";
 import { Gauge, Counter, Histogram, register } from "prom-client";
 import Redis from "ioredis";
+
+type RedisClient = InstanceType<typeof Redis>;
 import { createAdapter } from "@socket.io/redis-adapter";
 import dotenv from "dotenv";
 
@@ -105,12 +107,12 @@ const largeMessageCounter = new Counter({
 });
 
 // === Redis clients (declared at module scope) ===
-let pubClient: Redis;
-let subClient: Redis;
+let pubClient: RedisClient;
+let subClient: RedisClient;
 
 // === Redis helpers: retry on master ===
 async function safeSet(
-  client: Redis,
+  client: RedisClient,
   key: string,
   value: string,
   ttlSeconds?: number,
@@ -199,7 +201,7 @@ async function main() {
     port: dragonflyPort,
     password: dragonflyPassword || undefined,
     lazyConnect: true,
-    retryStrategy(times) {
+    retryStrategy(times: number) {
       return Math.min(times * 200, 3000);
     },
   });
