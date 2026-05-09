@@ -4,8 +4,7 @@ import http from "http";
 import { Server as SocketIO } from "socket.io";
 import { Gauge, Counter, Histogram, register } from "prom-client";
 import Redis from "ioredis";
-
-type RedisClient = InstanceType<typeof Redis>;
+import type { Redis as RedisClient } from "ioredis";
 import { createAdapter } from "@socket.io/redis-adapter";
 import dotenv from "dotenv";
 
@@ -225,7 +224,7 @@ async function main() {
       console.warn(`❌ ${name} connection ended`);
       if (isPub) redisUpGauge.set(0);
     });
-    client.on("error", (err) => {
+    client.on("error", (err: Error) => {
       console.error(`❌ ${name} error:`, err);
       if (isPub) redisUpGauge.set(0);
     });
