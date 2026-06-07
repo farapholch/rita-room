@@ -17,7 +17,7 @@
     "@semantic-release/git": "^10.0.1",
     "@types/debug": "4.1.13",
     "@types/express": "5.0.6",
-    "@types/node": "25.9.1",
+    "@types/node": "25.9.2",
     "@typescript-eslint/eslint-plugin": "^8.60.0",
     "@typescript-eslint/parser": "^8.60.0",
     "c8": "^11.0.0",
