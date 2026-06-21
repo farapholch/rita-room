@@ -8,7 +8,7 @@
     "ioredis": "^5.11.1",
     "prom-client": "^15.1.3",
     "socket.io": "^4.8.3",
-    "socket.io-adapter": "^2.5.7"
+    "socket.io-adapter": "^2.5.8"
   },
   "devDependencies": {
     "@excalidraw/eslint-config": "1.0.3",
