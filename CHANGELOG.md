@@ -1,3 +1,5 @@
+## [1.7.1](https://github.com/farapholch/rita-room/compare/v1.7.0...v1.7.1) (2026-07-05)
+
 ## [1.6.4](https://github.com/farapholch/rita-room/compare/v1.6.3...v1.6.4) (2026-03-24)
 
 ### Bug Fixes
