@@ -27,7 +27,7 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
     "prettier": "^3.9.5",
-    "semantic-release": "^25.0.5",
+    "semantic-release": "^25.0.6",
     "socket.io-client": "^4.8.3",
     "ts-node-dev": "^2.0.0",
     "typescript": "6.0.3"
