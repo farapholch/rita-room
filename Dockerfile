@@ -23,6 +23,10 @@ RUN apk add --no-cache dumb-init
 COPY package.json yarn.lock ./
 RUN yarn install --production --frozen-lockfile && yarn cache clean
 
+# Remove the npm CLI bundled in the base image; it is not used at runtime
+# (the app runs via yarn) and its bundled deps trigger Trivy CVE alerts.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
 COPY --from=builder /excalidraw-room/dist ./dist
 
 # Health check
