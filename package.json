@@ -33,7 +33,8 @@
     "typescript": "6.0.3"
   },
   "resolutions": {
-    "braces": "^3.0.3"
+    "braces": "^3.0.3",
+    "ws": "8.21.0"
   },
   "license": "MIT",
   "main": "dist/index.js",
