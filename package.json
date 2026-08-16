@@ -21,7 +21,7 @@
     "@typescript-eslint/eslint-plugin": "^8.65.0",
     "@typescript-eslint/parser": "^8.66.0",
     "c8": "^12.0.0",
-    "conventional-changelog-conventionalcommits": "^10.2.1",
+    "conventional-changelog-conventionalcommits": "^10.3.0",
     "cross-env": "10.1.0",
     "eslint": "10.8.1",
     "eslint-config-prettier": "10.1.8",
