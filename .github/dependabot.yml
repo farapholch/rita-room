@@ -7,6 +7,10 @@ updates:
       day: "sunday"
       time: "01:00"
     open-pull-requests-limit: 10
+    ignore:
+      # The release-notes generator uses writer 8; preset 10 requires writer 9.
+      - dependency-name: "conventional-changelog-conventionalcommits"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
       - "npm"

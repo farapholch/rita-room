@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       reason:
-        description: 'Reason for manual release'
+        description: "Reason for manual release"
         required: false
         type: string
 
@@ -34,14 +34,14 @@ jobs:
         run: |
           # Get commits since last tag
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
+
           if [ -z "$LAST_TAG" ]; then
             echo "should-release=true" >> $GITHUB_OUTPUT
             echo "release-type=first" >> $GITHUB_OUTPUT
             echo "No previous tag, will create first release"
             exit 0
           fi
-          
+
           # Check if manual trigger
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "should-release=true" >> $GITHUB_OUTPUT
@@ -49,10 +49,10 @@ jobs:
             echo "Manual release triggered"
             exit 0
           fi
-          
+
           # Check for fix/security/perf commits (auto-release)
           FIX_COMMITS=$(git log $LAST_TAG..HEAD --oneline --grep="^fix:" --grep="^security:" --grep="^perf:" -i | wc -l)
-          
+
           if [ "$FIX_COMMITS" -gt 0 ]; then
             echo "should-release=true" >> $GITHUB_OUTPUT
             echo "release-type=auto-fix" >> $GITHUB_OUTPUT
@@ -84,6 +84,9 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+
+      - name: Validate release notes compatibility
+        run: yarn test:release
 
       - name: Semantic Release
         id: semantic
