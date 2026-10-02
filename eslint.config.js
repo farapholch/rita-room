@@ -3,6 +3,7 @@ import typescriptPlugin from "@typescript-eslint/eslint-plugin";
 import prettierPlugin from "eslint-plugin-prettier";
 
 export default [
+  { ignores: ["dist/**", "node_modules/**", "**/*.js"] },
   {
     languageOptions: {
       parser: typescriptParser,

@@ -1,191 +1,133 @@
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { io } from "socket.io-client";
 
 const SERVER_URL = process.env.SERVER_URL || "http://localhost:3002";
 const TIMEOUT = 10000;
+const clients = [];
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function waitForServer(url, maxRetries = 30) {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      const response = await fetch(url + "/health");
-      if (response.ok) {
-        console.log("✓ Server is ready at " + url);
-        return true;
-      }
-    } catch {
-      // Server not ready yet
-    }
-    console.log("Waiting for server... (" + (i + 1) + "/" + maxRetries + ")");
-    await sleep(1000);
-  }
-  throw new Error("Server not ready after " + maxRetries + " seconds");
-}
-
-async function testHealthEndpoint() {
-  const response = await fetch(SERVER_URL + "/health");
-  if (!response.ok) {
-    throw new Error("Health endpoint returned " + response.status);
-  }
-  const data = await response.json();
-
-  if (data.status !== "healthy") {
-    throw new Error("Server status is " + data.status + ", expected healthy");
-  }
-
-  if (!data.redis || !data.redis.connected) {
-    throw new Error("Redis/Dragonfly not connected");
-  }
-
-  console.log(
-    "✓ Health endpoint OK (status: " + data.status + ", redis: connected)",
-  );
-}
-
-async function testWebSocketConnection() {
+function event(socket, name) {
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error("WebSocket connection timeout"));
+    const timer = setTimeout(() => {
+      socket.off(name, receive);
+      reject(new Error(`Timed out waiting for ${name}`));
     }, TIMEOUT);
-
-    const socket = io(SERVER_URL, {
-      transports: ["websocket"],
-    });
-
-    socket.on("connect", () => {
-      console.log("✓ WebSocket connected (id: " + socket.id + ")");
-      clearTimeout(timeout);
-      socket.disconnect();
-      resolve();
-    });
-
-    socket.on("connect_error", (error) => {
-      clearTimeout(timeout);
-      reject(new Error("WebSocket connection failed: " + error.message));
-    });
-  });
-}
-
-async function testRoomJoin() {
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error("Room join timeout"));
-    }, TIMEOUT);
-
-    const roomId = "test-room-" + Date.now();
-    const socket = io(SERVER_URL, {
-      transports: ["websocket"],
-    });
-
-    let resolved = false;
-
-    socket.on("connect", () => {
-      console.log("✓ Connected, joining room: " + roomId);
-      socket.emit("join-room", roomId);
-
-      // Give it a moment then pass
-      setTimeout(() => {
-        if (!resolved && socket.connected) {
-          resolved = true;
-          console.log("✓ Room join completed");
-          clearTimeout(timeout);
-          socket.disconnect();
-          resolve();
-        }
-      }, 2000);
-    });
-
-    socket.on("room-user-change", () => {
-      if (!resolved) {
-        resolved = true;
-        console.log("✓ Room joined, received user change event");
-        clearTimeout(timeout);
-        socket.disconnect();
-        resolve();
-      }
-    });
-
-    socket.on("connect_error", (error) => {
-      clearTimeout(timeout);
-      reject(new Error("Connection failed: " + error.message));
-    });
-  });
-}
-
-async function testMultipleClients() {
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error("Multiple clients test timeout"));
-    }, TIMEOUT);
-
-    const roomId = "test-multi-" + Date.now();
-    const socket1 = io(SERVER_URL, { transports: ["websocket"] });
-    const socket2 = io(SERVER_URL, { transports: ["websocket"] });
-
-    let client1Ready = false;
-    let client2Ready = false;
-
-    const checkDone = () => {
-      if (client1Ready && client2Ready) {
-        console.log("✓ Multiple clients can join same room");
-        clearTimeout(timeout);
-        socket1.disconnect();
-        socket2.disconnect();
-        resolve();
-      }
+    const receive = (...args) => {
+      clearTimeout(timer);
+      resolve(args);
     };
-
-    socket1.on("connect", () => {
-      socket1.emit("join-room", roomId);
-      client1Ready = true;
-      checkDone();
-    });
-
-    socket2.on("connect", () => {
-      socket2.emit("join-room", roomId);
-      client2Ready = true;
-      checkDone();
-    });
-
-    socket1.on("connect_error", (e) => {
-      clearTimeout(timeout);
-      reject(new Error("Client 1 failed: " + e.message));
-    });
-
-    socket2.on("connect_error", (e) => {
-      clearTimeout(timeout);
-      reject(new Error("Client 2 failed: " + e.message));
-    });
+    socket.once(name, receive);
   });
+}
+
+async function connect() {
+  const socket = io(SERVER_URL, {
+    transports: ["websocket"],
+    autoConnect: false,
+    reconnection: false,
+  });
+  clients.push(socket);
+  const connected = event(socket, "connect");
+  socket.connect();
+  await connected;
+  return socket;
+}
+
+async function join(socket, room) {
+  const joined = event(socket, "room-user-change");
+  socket.emit("join-room", room);
+  const [members] = await joined;
+  assert.ok(members.includes(socket.id));
+  return members;
 }
 
 async function runTests() {
-  console.log("\n🧪 Rita-Room Integration Tests\n");
-  console.log("Server URL: " + SERVER_URL + "\n");
-
-  try {
-    await waitForServer(SERVER_URL);
-
-    console.log("\n--- Test 1: Health Endpoint ---");
-    await testHealthEndpoint();
-
-    console.log("\n--- Test 2: WebSocket Connection ---");
-    await testWebSocketConnection();
-
-    console.log("\n--- Test 3: Room Join ---");
-    await testRoomJoin();
-
-    console.log("\n--- Test 4: Multiple Clients ---");
-    await testMultipleClients();
-
-    console.log("\n✅ All tests passed!\n");
-    process.exit(0);
-  } catch (error) {
-    console.error("\n❌ Test failed: " + error.message + "\n");
-    process.exit(1);
+  for (let attempt = 0; attempt < 30; attempt++) {
+    try {
+      if ((await fetch(`${SERVER_URL}/health`)).ok) break;
+    } catch {
+      // Server may still be starting.
+    }
+    await sleep(1000);
   }
+  const health = await fetch(`${SERVER_URL}/health`);
+  assert.equal(health.status, 200);
+  assert.equal((await health.json()).redis.connected, true);
+  console.log("✓ Health endpoint");
+
+  // Repeated scrapes catch duplicate HTTP handlers / headers already sent.
+  for (let i = 0; i < 3; i++) {
+    const metrics = await fetch(`${SERVER_URL}/metrics`);
+    assert.equal(metrics.status, 200);
+    assert.match(metrics.headers.get("content-type"), /text\/plain/);
+    assert.match(await metrics.text(), /socket_io_connected/);
+  }
+  console.log("✓ Prometheus metrics");
+
+  const first = await connect();
+  const second = await connect();
+  const outsider = await connect();
+  const room = `test-${randomUUID()}`;
+  const firstInRoom = event(first, "first-in-room");
+  assert.deepEqual(await join(first, room), [first.id]);
+  await firstInRoom;
+  const newUser = event(first, "new-user");
+  assert.deepEqual(
+    (await join(second, room)).sort(),
+    [first.id, second.id].sort(),
+  );
+  assert.deepEqual(await newUser, [second.id]);
+  console.log("✓ Room membership and peer notification");
+
+  const received = [];
+  const outsideReceived = [];
+  second.on("client-broadcast", (...args) => received.push(args));
+  outsider.on("client-broadcast", (...args) => outsideReceived.push(args));
+  const payload = Buffer.from([1, 2, 3, 4]);
+  const iv = Buffer.alloc(12, 7);
+  for (const name of ["server-broadcast", "server-volatile-broadcast"]) {
+    const delivered = event(second, "client-broadcast");
+    first.emit(name, room, payload, iv);
+    const [data, deliveredIv] = await delivered;
+    assert.deepEqual(Buffer.from(data), payload);
+    assert.deepEqual(Buffer.from(deliveredIv), iv);
+  }
+  assert.equal(received.length, 2);
+  console.log("✓ Encrypted normal and volatile relay");
+
+  outsider.emit("server-broadcast", room, payload, iv);
+  outsider.emit("server-volatile-broadcast", room, payload, iv);
+  outsider.emit("join-room", null);
+  outsider.emit("join-room", { invalid: true });
+  outsider.emit("join-room", "");
+  outsider.emit("join-room", `follow@${first.id}`);
+  outsider.emit("join-room", first.id);
+  await sleep(500);
+  assert.equal(received.length, 2, "Non-member must not broadcast to room");
+  first.emit("server-broadcast", `follow@${first.id}`, payload, iv);
+  first.emit("server-broadcast", first.id, payload, iv);
+  const validDelivery = event(second, "client-broadcast");
+  first.emit("server-broadcast", room, payload, iv);
+  await validDelivery;
+  await sleep(100);
+  assert.equal(outsideReceived.length, 0, "Invalid joins must not expose data");
+  const survivor = await connect();
+  await join(survivor, `test-${randomUUID()}`);
+  console.log("✓ Room isolation, invalid joins, server stays responsive");
+
+  const remainingMembers = event(first, "room-user-change");
+  second.disconnect();
+  assert.deepEqual(await remainingMembers, [[first.id]]);
+  console.log("✓ Disconnect updates room membership");
 }
 
-runTests();
+try {
+  await runTests();
+  console.log("✅ All integration tests passed");
+} catch (error) {
+  console.error(error);
+  process.exitCode = 1;
+} finally {
+  clients.forEach((socket) => socket.disconnect());
+}

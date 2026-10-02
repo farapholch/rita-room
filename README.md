@@ -61,7 +61,7 @@ services:
 ## Endpoints
 
 - **GET /** - Server status
-- **GET /health** - Health check with Redis connection status
+- **GET /health** - Returns 200 only when both Redis pub/sub connections are ready; otherwise 503
 - **GET /metrics** - Prometheus metrics
 - **WebSocket** - Socket.IO connection for real-time collaboration
 
@@ -102,3 +102,17 @@ Access metrics at `http://your-server:3002/metrics`
 ---
 
 Built with ❤️ for real-time collaboration
+
+## Room isolation
+
+Clients must join a drawing room before sending normal or volatile broadcasts.
+Invalid room IDs and attempts to join Socket.IO private rooms or `follow@` rooms
+through `join-room` are ignored. Drawing rooms still use the existing shared-link
+protocol: knowing a room ID allows joining it; this is not account authentication.
+
+## Integration tests
+
+With Redis/Dragonfly and the server running, run `yarn test:integration`
+(`SERVER_URL` defaults to `http://localhost:3002`). The suite verifies health,
+Prometheus scrapes, confirmed membership, binary relay, room isolation, malformed
+joins, and disconnect notifications using real WebSocket clients.
