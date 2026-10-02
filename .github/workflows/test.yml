@@ -22,3 +22,4 @@ jobs:
         run: |
           yarn test:code
           yarn build
+          yarn test:release
