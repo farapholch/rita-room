@@ -42,7 +42,8 @@ app.get("/", (_, res) => {
 
 // Health check endpoint for Docker/Kubernetes
 app.get("/health", (_, res) => {
-  const isRedisConnected = pubClient?.status === "ready";
+  const isRedisConnected =
+    pubClient?.status === "ready" && subClient?.status === "ready";
   const healthStatus = {
     status: isRedisConnected ? "healthy" : "degraded",
     timestamp: new Date().toISOString(),
@@ -59,6 +60,22 @@ app.get("/health", (_, res) => {
     res.status(503).json(healthStatus);
   }
 });
+
+app.get("/metrics", async (_, res) => {
+  try {
+    res.setHeader("Content-Type", register.contentType);
+    res.send(await register.metrics());
+  } catch (err) {
+    console.error("Metrics fetch error:", err);
+    res.status(500).send("Error collecting metrics");
+  }
+});
+
+// Socket.IO reserves socket IDs and follow rooms for internal routing.
+const isDrawingRoom = (roomID: unknown): roomID is string =>
+  typeof roomID === "string" &&
+  roomID.length > 0 &&
+  !roomID.startsWith("follow@");
 
 const server = http.createServer(app);
 
@@ -301,7 +318,11 @@ async function main() {
 
     io.to(socket.id).emit("init-room");
 
-    socket.on("join-room", async (roomID: string) => {
+    socket.on("join-room", async (roomID: unknown) => {
+      if (!isDrawingRoom(roomID)) return;
+      // Socket IDs have private rooms; joining one would expose direct events.
+      const privateSockets = await io.in(roomID).fetchSockets();
+      if (privateSockets.some((member) => member.id === roomID)) return;
       await socket.join(roomID);
       try {
         await safeSet(
@@ -328,6 +349,7 @@ async function main() {
     });
 
     socket.on("server-broadcast", (roomID, encryptedData, iv) => {
+      if (!isDrawingRoom(roomID) || !socket.rooms.has(roomID)) return;
       const dataSize = encryptedData?.length || 0;
       messageEmitCounter.inc({ event: "server-broadcast" });
       messageSizeHistogram.observe({ event: "server-broadcast" }, dataSize);
@@ -341,6 +363,7 @@ async function main() {
     });
 
     socket.on("server-volatile-broadcast", (roomID, encryptedData, iv) => {
+      if (!isDrawingRoom(roomID) || !socket.rooms.has(roomID)) return;
       const dataSize = encryptedData?.length || 0;
       messageEmitCounter.inc({ event: "server-volatile-broadcast" });
       messageSizeHistogram.observe(
@@ -372,13 +395,14 @@ async function main() {
     });
 
     socket.on("disconnecting", async () => {
+      // Socket.IO clears rooms as soon as this synchronous callback returns.
+      const rooms = Array.from(socket.rooms);
       try {
         await safeDel(pubClient, `user-room:${socket.id}`);
       } catch (err) {
         console.error("safeDel failed in disconnecting:", err);
       }
 
-      const rooms = Array.from(socket.rooms);
       for (const roomId of rooms) {
         const others = (await io.in(roomId).fetchSockets()).filter(
           (s) => s.id !== socket.id,
@@ -449,21 +473,6 @@ async function main() {
 
   process.on("SIGTERM", () => shutdown("SIGTERM"));
   process.on("SIGINT", () => shutdown("SIGINT"));
-
-  // === Metrics endpoint ===
-  server.on("request", async (req, res) => {
-    if (req.url === "/metrics") {
-      try {
-        const metrics = await register.metrics();
-        res.setHeader("Content-Type", register.contentType);
-        res.end(metrics);
-      } catch (err) {
-        res.statusCode = 500;
-        res.end("Error collecting metrics");
-        console.error("Metrics fetch error:", err);
-      }
-    }
-  });
 }
 
 // === Global error guards ===
