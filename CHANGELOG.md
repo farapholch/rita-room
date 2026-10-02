@@ -1,3 +1,12 @@
+## [1.7.2](https://github.com/farapholch/rita-room/compare/v1.7.1...v1.7.2) (2026-10-02)
+
+### Bug Fixes
+
+* **deps:** patch undici, ws and brace-expansion security advisories ([#176](https://github.com/farapholch/rita-room/issues/176)) ([c2e5309](https://github.com/farapholch/rita-room/commit/c2e5309f6a3e1dc005fcd358605f496e29976f9c))
+* **docker:** remove bundled npm from runtime image ([#177](https://github.com/farapholch/rita-room/issues/177)) ([fa025ba](https://github.com/farapholch/rita-room/commit/fa025ba144d8c38e3f058ba49899313fa352a1cd))
+* enforce room isolation and repair disconnect notifications ([#215](https://github.com/farapholch/rita-room/issues/215)) ([a05fec6](https://github.com/farapholch/rita-room/commit/a05fec66b5f39b30b640ede0bdb384c3ccd35f3b))
+* repair release tooling and update vulnerable Undici dependencies ([#216](https://github.com/farapholch/rita-room/issues/216)) ([2e3b9aa](https://github.com/farapholch/rita-room/commit/2e3b9aa8806b79666de726d4b6fbd7ba0a4eaf84))
+
 ## [1.7.1](https://github.com/farapholch/rita-room/compare/v1.7.0...v1.7.1) (2026-07-05)
 
 ## [1.6.4](https://github.com/farapholch/rita-room/compare/v1.6.3...v1.6.4) (2026-03-24)
