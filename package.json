@@ -55,6 +55,6 @@
     "test:coverage": "c8 --reporter=text --reporter=lcov node dist/index.js",
     "test:release": "node tests/release-notes-test.mjs"
   },
-  "version": "1.7.2",
+  "version": "1.7.3",
   "packageManager": "yarn@1.22.22"
 }

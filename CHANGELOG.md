@@ -1,3 +1,9 @@
+## [1.7.3](https://github.com/farapholch/rita-room/compare/v1.7.2...v1.7.3) (2026-10-04)
+
+### Bug Fixes
+
+* update cache and brace-expansion dependencies ([#224](https://github.com/farapholch/rita-room/issues/224)) ([39b7810](https://github.com/farapholch/rita-room/commit/39b7810c18a796f2522a17d2967349dbdba87f91))
+
 ## [1.7.2](https://github.com/farapholch/rita-room/compare/v1.7.1...v1.7.2) (2026-10-02)
 
 ### Bug Fixes
