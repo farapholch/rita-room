@@ -12,28 +12,43 @@ jobs:
   auto-merge:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
-    
+
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v2
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-      
+
       - name: Auto-approve PR
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
         run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Merge Dependabot PRs
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
-        run: gh pr merge --squash "$PR_URL"
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            if output=$(gh pr merge --squash --match-head-commit "$PR_HEAD_SHA" "$PR_URL" 2>&1); then
+              printf '%s\n' "$output"
+              exit 0
+            fi
+
+            printf '%s\n' "$output" >&2
+            if [[ "$output" != *"Base branch was modified"* || "$attempt" == 3 ]]; then
+              exit 1
+            fi
+
+            sleep 2
+          done
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Comment on major version updates
         if: steps.metadata.outputs.update-type == 'version-update:semver-major'
         run: |
